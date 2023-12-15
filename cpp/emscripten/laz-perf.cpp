@@ -7,6 +7,7 @@
 
 #include "header.hpp"
 #include "readers.hpp"
+#include "writers.hpp"
 
 using namespace emscripten;
 
@@ -47,6 +48,35 @@ class LASZip
 		std::shared_ptr<lazperf::reader::mem_file> mem_file_;
 };
 
+class LASZipWriter
+{
+public: 
+    LASZipWriter() {}
+
+    void open(unsigned int b, unsigned int hb, size_t chunk_size) {
+        char *buf = (char*) b;
+        char *header_buf = (char*) hb;
+        mem_file_.reset(new lazperf::writer::mem_file(buf, header_buf, chunk_size));
+    }
+
+    void close() {
+        mem_file_->close();
+    }
+
+    void writePoint(int buf) {
+        char *pbuf = reinterpret_cast<char*>(buf);
+        mem_file_->writePoint(pbuf);
+    }
+
+    unsigned int getBytesWritten() const
+    {
+        return static_cast<unsigned int>(mem_file_->bytesWritten());
+    }
+    
+	private:
+		std::shared_ptr<lazperf::writer::mem_file> mem_file_;
+};
+
 class ChunkDecoder
 {
 public:
@@ -78,6 +108,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .function("getPointFormat", &LASZip::getPointFormat)
 		.function("getPoint", &LASZip::getPoint)
 		.function("getCount", &LASZip::getCount);
+    
+    class_<LASZipWriter>("LASZipWriter")
+        .constructor()
+        .function("open", &LASZipWriter::open)
+        .function("close", &LASZipWriter::close)
+        .function("writePoint", &LASZipWriter::writePoint)
+        .function("getBytesWritten", &LASZipWriter::getBytesWritten);
 
     class_<ChunkDecoder>("ChunkDecoder")
         .constructor()

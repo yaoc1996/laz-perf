@@ -11,6 +11,16 @@ declare class LASZip {
   getPointFormat(): number
 }
 
+declare class LASZipWriter {
+  constructor()
+  delete(): void
+
+  open(b: Pointer, hb: Pointer, chunkSize: number): void
+  close(): void
+  writePoint(dest: Pointer): void
+  getBytesWritten(): number
+}
+
 declare class ChunkDecoder {
   constructor()
   delete(): void
@@ -26,6 +36,7 @@ declare class ChunkDecoder {
 
 export declare interface LazPerf extends EmscriptenModule {
   LASZip: typeof LASZip
+  LASZipWriter: typeof LASZipWriter
   ChunkDecoder: typeof ChunkDecoder
 }
 

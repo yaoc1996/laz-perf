@@ -444,7 +444,7 @@ generic_file::generic_file(std::istream& in)
 named_file::named_file(const std::string& filename) : p_(new Private(filename))
 {
     if (!open(p_->f))
-        throw error("Couldn't open named_file as LAS/LAZ");;
+        throw error("Couldn't open named_file as LAS/LAZ");
 }
 
 named_file::~named_file()

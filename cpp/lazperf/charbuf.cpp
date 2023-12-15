@@ -61,8 +61,8 @@ std::ios::pos_type charbuf::seekpos(std::ios::pos_type pos,
     {
         if (pos > epptr() - m_buf)
             return -1;
-        char *cpos = m_buf + pos;
-        setp(cpos, epptr());
+        setp(m_buf, epptr());
+        pbump(pos);
     }
     return pos;
 }
@@ -105,17 +105,36 @@ charbuf::seekoff(std::ios::off_type off, std::ios_base::seekdir dir,
             cpos = pptr() + off;
             break;
         case std::ios::end:
-            cpos = egptr() - off;
+            cpos = epptr() - off;
             break;
         default:
             break;  // Should never happen.
         }
         if (cpos < m_buf || cpos > epptr())
             return -1;
-        setp(cpos, epptr());
+        setp(m_buf, epptr());
         pos = cpos - m_buf;
+        pbump(pos);
     }
     return pos;
+}
+
+std::streamsize charbuf::xsputn(const char* s, std::streamsize n) {
+    size_t n_left = this->epptr() - this->pptr();
+    size_t offset = this->pptr() - this->pbase();
+    
+    if (n_left < n) {
+        this->setp(this->m_buf, this->m_buf + offset + n - n_left);
+        this->pbump(offset);
+    }
+    
+    for (int i = 0; i < n; ++i) {
+        this->m_buf[offset + i] = s[i];
+    }
+    
+    this->pbump(n);
+    
+    return n;
 }
 
 } //namespace lazperf

@@ -52,6 +52,16 @@ protected:
     std::unique_ptr<Private> p_;
 };
 
+class mem_file : public basic_file {
+    struct Private;
+public:
+    LAZPERF_EXPORT mem_file(char *buf, char *header_buf, uint32_t chunk_size);
+    LAZPERF_EXPORT uint64_t bytesWritten();
+    LAZPERF_EXPORT ~mem_file();
+private:
+    std::unique_ptr<Private> p_;
+};
+
 class named_file : public basic_file
 {
     struct Private;

@@ -28,6 +28,7 @@
 ===============================================================================
 */
 
+#include "charbuf.hpp"
 #include "las.hpp"
 #include "lazperf.hpp"
 #include "streams.hpp"
@@ -65,6 +66,16 @@ struct basic_file::Private
     header14 head14;
     std::ostream *f;  // Pointer because we don't have a reference target at construction.
     std::unique_ptr<OutFileStream> stream;
+};
+
+struct mem_file::Private 
+{
+    using Base = basic_file::Private;
+
+    Private(char *buf) : sbuf(buf, 0), f(&sbuf) {}
+
+    charbuf sbuf;
+    std::ostream f;
 };
 
 struct named_file::Private
@@ -159,8 +170,10 @@ uint64_t basic_file::Private::firstChunkOffset() const
 
 void basic_file::Private::writePoint(const char *p)
 {
-    if (!compressed())
+    if (!compressed()) {
         stream->putBytes(reinterpret_cast<const unsigned char *>(p), head12.point_record_length);
+        head14.point_count_14++;
+    }
     else
     {
         //ABELL - This first bit can go away if we simply always create compressor.
@@ -329,6 +342,36 @@ uint64_t basic_file::newChunk()
 void basic_file::close()
 {
     p_->close();
+}
+
+// mem_file
+mem_file::mem_file(char *buf, char *header_buf, uint32_t chunk_size): p_(new Private(buf)) 
+{
+    charbuf cb(header_buf, header12::Size);
+    std::istream is(&cb);
+    header12 h = header12::create(is);
+
+    if (!open(p_->f, h, chunk_size)) {
+        throw error("Couldn't open mem_file as LAS/LAZ");
+    }
+}
+
+uint64_t mem_file::bytesWritten() {
+    std::ostream &f = p_->f;
+    uint64_t p = static_cast<uint64_t>(f.tellp());
+
+    f.seekp(0, std::ios::beg);
+    uint64_t start_p = static_cast<uint64_t>(f.tellp());
+
+    f.seekp(0, std::ios::end);
+    uint64_t end_p = static_cast<uint64_t>(f.tellp());
+
+    f.seekp(p, std::ios::beg);
+
+    return end_p - start_p;
+}
+
+mem_file::~mem_file() {
 }
 
 // named_file

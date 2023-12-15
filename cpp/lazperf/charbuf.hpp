@@ -104,6 +104,8 @@ protected:
         std::ios_base::seekdir dir,
         std::ios_base::openmode which = std::ios_base::in | std::ios_base::out);
 
+    std::streamsize xsputn (const char* s, std::streamsize n);
+
 private:
     /**
       Offset that allows one to seek to positions not based on the beginning

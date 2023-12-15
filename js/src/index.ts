@@ -1,3 +1,4 @@
+/* eslint-disable-next-line */
 import createLazPerf from './laz-perf.js'
 export { createLazPerf }
 export const create = createLazPerf
